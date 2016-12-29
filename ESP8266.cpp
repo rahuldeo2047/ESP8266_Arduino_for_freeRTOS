@@ -26,8 +26,8 @@
 #include <Arduino_FreeRTOS.h>
 #endif
 
-#define LOG_OUTPUT_DEBUG            (1)
-#define LOG_OUTPUT_DEBUG_PREFIX     (1)
+#define LOG_OUTPUT_DEBUG            (0)
+#define LOG_OUTPUT_DEBUG_PREFIX     (0)
 
 #define logDebug(arg)\
     do {\
