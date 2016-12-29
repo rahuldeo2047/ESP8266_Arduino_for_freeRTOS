@@ -175,6 +175,10 @@ See the follow line in the HardwareSerial.h file.
 The default size of the buffer is 64. Change it into a bigger number, like 256 or more.
 
 
+# Credit for base code
+
+https://github.com/itead/ITEADLIB_Arduino_WeeESP8266
+
 -------------------------------------------------------------------------------
 
 # The End!
