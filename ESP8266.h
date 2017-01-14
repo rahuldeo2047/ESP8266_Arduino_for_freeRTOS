@@ -184,7 +184,7 @@ class ESP8266 {
      *
      * @return the IP list. 
      */
-    String getLocalIP(void);
+    char * getLocalIP(void);
     
     /**
      * Enable IP MUX(multiple connection mode). 
@@ -471,7 +471,7 @@ class ESP8266 {
     bool sATCIPSENDMultiple(uint8_t mux_id, const uint8_t *buffer, uint32_t len);
     bool sATCIPCLOSEMulitple(uint8_t mux_id);
     bool eATCIPCLOSESingle(void);
-    bool eATCIFSR(String &list);
+    bool eATCIFSR(char * list);
     bool sATCIPMUX(uint8_t mode);
     bool sATCIPSERVER(uint8_t mode, uint32_t port = 333);
     bool sATCIPSTO(uint32_t timeout);

@@ -208,9 +208,10 @@ String ESP8266::getIPStatus(void)
     return list;
 }
 
-String ESP8266::getLocalIP(void)
+char * ESP8266::getLocalIP(void)
 {
-    String list;
+    static char list[256] = {0};
+    memset(list, 0, 256); 
     eATCIFSR(list);
     return list;
 }
@@ -430,24 +431,24 @@ String ESP8266::recvString(String target, uint32_t timeout)
     String data;
     char a;
     unsigned long start = millis();
-Serial.print("<");
-Serial.print(start);
-Serial.println("< [ ");
+//Serial.print("<");
+//Serial.print(start);
+//Serial.println("< [ ");
     while (millis() - start < timeout) {
         while(m_puart->available() > 0) {
             a = m_puart->read();
 			if(a == '\0') continue;
             data += a;
-Serial.write(a);
+//Serial.write(a);
         }
         if (data.indexOf(target) != -1) {
             break;
         }   
     }
-Serial.print(data);
-Serial.print(" ] <");
-Serial.print(millis());
-Serial.println("<");
+//Serial.print(data);
+//Serial.print(" ] <");
+//Serial.print(millis());
+//Serial.println("<");
     return data;
 }
 
@@ -710,7 +711,7 @@ logDebug(end);
 	pend = strstr (pbegin, end); 
 	//logDebug(data_tmp);
 	logDebug((pend));
-	Serial.println(strlen(pend));
+	//Serial.println(strlen(pend));
 	//Serial.println((pend+1));
 
 	if( (NULL != pbegin) && (NULL != pend) ) {
@@ -840,7 +841,7 @@ bool ESP8266::sATCWJAP(char * ssid, char * pwd)
     m_puart->println("\"");
     
     data = recvString("OK", "FAIL", 10000);
-    
+    //Serial.println(data);
     chk = strstr (data, "OK");
     logDebug(chk); //  
      
@@ -920,7 +921,7 @@ bool ESP8266::eATCIPSTATUS(String &list)
 {
     String data;
 #if defined(RTOS_BASED_DELAY)
-    vTaskDelay((TickType_t)100);
+    vTaskDelay((TickType_t)pdMS_TO_TICKS(2*100));
 #else
     delay(100);
 #endif
@@ -1063,7 +1064,7 @@ bool ESP8266::eATCIPCLOSESingle(void)
     m_puart->println("AT+CIPCLOSE");
     return recvFind("OK", 5000);
 }
-bool ESP8266::eATCIFSR(String &list)
+bool ESP8266::eATCIFSR(char * list)
 {
     rx_empty();
     m_puart->println("AT+CIFSR");
