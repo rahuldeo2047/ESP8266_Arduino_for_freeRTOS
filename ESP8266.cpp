@@ -343,13 +343,13 @@ uint32_t ESP8266::recv(uint8_t *coming_mux_id, uint8_t *buffer, uint32_t buffer_
 /* +IPD,<id>,<len>:<data> */
 /* +IPD,<len>:<data> */
 
-uint32_t ESP8266::recvPkg(uint8_t *buffer, uint32_t buffer_size, uint32_t *data_len, uint32_t timeout, uint8_t *coming_mux_id)
+/*uint32_t ESP8266::recvPkg(uint8_t *buffer, uint32_t buffer_size, uint32_t *data_len, uint32_t timeout, uint8_t *coming_mux_id)
 {
     String data;
     char a;
     int32_t index_PIPDcomma = -1;
-    int32_t index_colon = -1; /* : */
-    int32_t index_comma = -1; /* , */
+    int32_t index_colon = -1; // : //
+    int32_t index_comma = -1; // , //
     int32_t len = -1;
     int8_t id = -1;
     bool has_data = false;
@@ -373,7 +373,7 @@ uint32_t ESP8266::recvPkg(uint8_t *buffer, uint32_t buffer_size, uint32_t *data_
             index_colon = data.indexOf(':', index_PIPDcomma + 5);
             if (index_colon != -1) {
                 index_comma = data.indexOf(',', index_PIPDcomma + 5);
-                /* +IPD,id,len:data */
+                /// +IPD,id,len:data ///
                 if (index_comma != -1 && index_comma < index_colon) { 
                     id = data.substring(index_PIPDcomma + 5, index_comma).toInt();
                     if (id < 0 || id > 4) {
@@ -383,8 +383,145 @@ uint32_t ESP8266::recvPkg(uint8_t *buffer, uint32_t buffer_size, uint32_t *data_
                     if (len <= 0) {
                         return 0;
                     }
-                } else { /* +IPD,len:data */
+                } else { /// +IPD,len:data ///
                     len = data.substring(index_PIPDcomma + 5, index_colon).toInt();
+                    if (len <= 0) {
+                        return 0;
+                    }
+                }
+                has_data = true;
+                break;
+            }
+        }
+    }
+    
+    if (has_data) {
+        i = 0;
+        ret = len > buffer_size ? buffer_size : len;
+        start = millis();
+        while (millis() - start < 3000) {
+            while(m_puart->available() > 0 && i < ret) {
+                a = m_puart->read();
+                buffer[i++] = a;
+            }
+            if (i == ret) {
+                rx_empty();
+                if (data_len) {
+                    *data_len = len;    
+                }
+                if (index_comma != -1 && coming_mux_id) {
+                    *coming_mux_id = id;
+                }
+                return ret;
+            }
+        }
+    }
+    return 0;
+}*/
+
+
+uint32_t ESP8266::recvPkg(uint8_t *buffer, uint32_t buffer_size, uint32_t *data_len, uint32_t timeout, uint8_t *coming_mux_id)
+{
+    //String data;
+    static char data[256] = {0};
+    memset(data,0,256);
+    
+    static char data2[4] = {0};
+    memset(data2,0,4);
+    
+    char a;
+    int inx = 0;
+    int32_t index_PIPDcomma = -1;
+    int32_t index_colon = -1; /* : */
+    int32_t index_comma = -1; /* , */
+    int32_t len = -1;
+    int8_t id = -1;
+    bool has_data = false;
+    uint32_t ret;
+    unsigned long start;
+    uint32_t i;
+    
+    if (buffer == NULL) {
+        return 0;
+    }
+    
+    start = millis();
+    while (millis() - start < timeout) {
+    Serial.println(__LINE__);
+        if(m_puart->available() > 0) {
+            a = m_puart->read();
+             if(inx<256)
+	    	data[inx++] = a;
+            else
+		break; 
+        }
+        
+        Serial.print(__LINE__);
+        Serial.print(" ");
+        Serial.println(data);
+        
+	//pdata1 = strstr (data, target1);
+	//       char *str = "sdfadabcGGGGGGGGG";
+	//char *result = strstr(str, "abc");
+	//int position = result - str;
+	//int substringLength = strlen(str) - position;
+
+        // Position of "+IPD,"
+        index_PIPDcomma = strstr(data, "+IPD,") - data ;//.indexOf("+IPD,");
+        
+        Serial.print(__LINE__);
+        Serial.print(" ");
+        Serial.println(index_PIPDcomma);
+        
+        if (index_PIPDcomma != -1) {
+        
+            index_colon = strstr(data+index_PIPDcomma + 5, ":"); // (':', index_PIPDcomma + 5);
+            //index_colon = data.indexOf(':', index_PIPDcomma + 5);
+            Serial.print(__LINE__);
+	    Serial.print(" ");
+	    Serial.println(index_colon); 
+        
+            if (index_colon != -1) {
+            
+                index_comma = strstr(data+index_PIPDcomma + 5, ",");
+                //index_comma = data.indexOf(',', index_PIPDcomma + 5);
+                Serial.print(__LINE__);
+		Serial.print(" ");
+		Serial.println(index_comma);
+            
+                /* +IPD,id,len:data */
+                if (index_comma != -1 && index_comma < index_colon) { 
+                
+                    //id = data.substring(index_PIPDcomma + 5, index_comma).toInt();
+                    id = atoi(strncpy(data2, index_PIPDcomma + 5, index_comma));
+                    Serial.print(__LINE__);
+        	    Serial.print(" ");
+                    Serial.println(id);
+                    
+                    if (id < 0 || id > 4) {
+                        return 0;
+                    }
+                    
+                    memset(data2,0,4);
+                    //len = data.substring(index_comma + 1, index_colon).toInt();
+                    len = atoi(strncpy(data2, index_comma + 1, index_colon));
+                    
+                    Serial.print(__LINE__);
+		    Serial.print(" ");
+		    Serial.println(len);
+                    
+                    if (len <= 0) {
+                        return 0;
+                    }
+                } else { /* +IPD,len:data */
+                
+                    memset(data2,0,4);
+                    //len = data.substring(index_PIPDcomma + 5, index_colon).toInt();
+                    len = atoi(strncpy(data2, index_PIPDcomma + 5, index_colon));
+                    Serial.print(__LINE__);
+        	    Serial.print(" ");
+                    Serial.println(len);
+                    
                     if (len <= 0) {
                         return 0;
                     }
@@ -1072,28 +1209,48 @@ bool ESP8266::eATCIFSR(char * list)
 }
 bool ESP8266::sATCIPMUX(uint8_t mode)
 {
-    String data;
+    char * data = NULL;
     rx_empty();
     m_puart->print("AT+CIPMUX=");
     m_puart->println(mode);
     
     data = recvString("OK", "Link is builded");
-    if (data.indexOf("OK") != -1) {
+    
+    //Serial.println(data);
+    
+    if ((NULL != data) ) {
         return true;
     }
     return false;
 }
 bool ESP8266::sATCIPSERVER(uint8_t mode, uint32_t port)
 {
-    String data;
+    char *data = NULL;
+    char *ok = NULL;
+    char *nc = NULL ;
+    
     if (mode) {
         rx_empty();
         m_puart->print("AT+CIPSERVER=1,");
         m_puart->println(port);
         
         data = recvString("OK", "no change");
-        if (data.indexOf("OK") != -1 || data.indexOf("no change") != -1) {
-            return true;
+        Serial.print(__LINE__);
+        Serial.print(" ");
+        Serial.println(data);
+        
+        ok = strstr (data, "OK");
+        Serial.print(__LINE__);
+        Serial.print(" ");
+        Serial.println(ok);
+         
+        nc = strstr (data, "no change");
+        Serial.print(__LINE__);
+        Serial.print(" ");
+        Serial.println(nc);
+
+	if( (NULL != ok) || (NULL != nc) ) {
+	     return true;
         }
         return false;
     } else {
