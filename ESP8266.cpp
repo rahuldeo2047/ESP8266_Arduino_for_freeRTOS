@@ -378,7 +378,7 @@ int isNumeric (const char * s)
   return *p == '\0';
 }
 
-char * getSring(byte *id, int *len, char * data, enum ipd_data_states str_state = IDL)
+char * getSring(uint8_t *id, uint32_t *len, char * data, enum ipd_data_states str_state = IDL)
 {
   static const char s[4] = "+,,:";
   static char *token = NULL;
@@ -490,78 +490,7 @@ char * getSring(byte *id, int *len, char * data, enum ipd_data_states str_state 
 
 uint32_t ESP8266::recvPkg(uint8_t *buffer, uint32_t buffer_size, uint32_t *data_len, uint32_t timeout, uint8_t *coming_mux_id)
 {
-    String data;
-    char a;
-    int32_t index_PIPDcomma = -1;
-    int32_t index_colon = -1; /* : */
-    int32_t index_comma = -1; /* , */
-    int32_t len = -1;
-    int8_t id = -1;
-    bool has_data = false;
-    uint32_t ret;
-    unsigned long start;
-    uint32_t i;
-    
-    if (buffer == NULL) {
-        return 0;
-    }
-    
-    start = millis();
-    while (millis() - start < timeout) {
-        if(m_puart->available() > 0) {
-            a = m_puart->read();
-            data += a;
-        }
-        
-        index_PIPDcomma = data.indexOf("+IPD,");
-        if (index_PIPDcomma != -1) {
-            index_colon = data.indexOf(':', index_PIPDcomma + 5);
-            if (index_colon != -1) {
-                index_comma = data.indexOf(',', index_PIPDcomma + 5);
-                /* +IPD,id,len:data */
-                if (index_comma != -1 && index_comma < index_colon) { 
-                    id = data.substring(index_PIPDcomma + 5, index_comma).toInt();
-                    if (id < 0 || id > 4) {
-                        return 0;
-                    }
-                    len = data.substring(index_comma + 1, index_colon).toInt();
-                    if (len <= 0) {
-                        return 0;
-                    }
-                } else { /* +IPD,len:data */
-                    len = data.substring(index_PIPDcomma + 5, index_colon).toInt();
-                    if (len <= 0) {
-                        return 0;
-                    }
-                }
-                has_data = true;
-                break;
-            }
-        }
-    }
-    
-    if (has_data) {
-        i = 0;
-        ret = len > buffer_size ? buffer_size : len;
-        start = millis();
-        while (millis() - start < 3000) {
-            while(m_puart->available() > 0 && i < ret) {
-                a = m_puart->read();
-                buffer[i++] = a;
-            }
-            if (i == ret) {
-                rx_empty();
-                if (data_len) {
-                    *data_len = len;    
-                }
-                if (index_comma != -1 && coming_mux_id) {
-                    *coming_mux_id = id;
-                }
-                return ret;
-            }
-        }
-    }
-    return 0;
+	return getSring(coming_mux_id, data_len, buffer, IDL);
 }
 
 void ESP8266::rx_empty(void) 
