@@ -86,7 +86,8 @@ class ESP8266 {
      * 
      * @return the string of version. 
      */
-    String getVersion(void);
+    //String getVersion(void);
+    char * getVersion(void);
     
     /**
      * Set operation mode to staion. 
@@ -131,7 +132,7 @@ class ESP8266 {
      * @note This method will take a couple of seconds. 
      */
     bool joinAP(String ssid, String pwd);
-    
+    bool joinAP(char * ssid, char * pwd);
     
     /**
      * Enable DHCP for client mode. 
@@ -183,7 +184,7 @@ class ESP8266 {
      *
      * @return the IP list. 
      */
-    String getLocalIP(void);
+    char * getLocalIP(void);
     
     /**
      * Enable IP MUX(multiple connection mode). 
@@ -215,7 +216,8 @@ class ESP8266 {
      * @retval true - success.
      * @retval false - failure.
      */
-    bool createTCP(String addr, uint32_t port);
+    //bool createTCP(String addr, uint32_t port);
+    bool createTCP(char * addr, uint32_t port); 
     
     /**
      * Release TCP connection in single mode. 
@@ -252,7 +254,8 @@ class ESP8266 {
      * @retval true - success.
      * @retval false - failure.
      */
-    bool createTCP(uint8_t mux_id, String addr, uint32_t port);
+    bool createTCP(uint8_t mux_id, char * addr, uint32_t port);
+    //bool createTCP(uint8_t mux_id, String addr, uint32_t port);
     
     /**
      * Release TCP connection in multiple mode. 
@@ -405,27 +408,32 @@ class ESP8266 {
      * Recvive data from uart. Return all received data if target found or timeout. 
      */
     String recvString(String target, uint32_t timeout = 1000);
+    char * recvString(char * target, uint32_t timeout = 1000);
     
     /* 
      * Recvive data from uart. Return all received data if one of target1 and target2 found or timeout. 
      */
     String recvString(String target1, String target2, uint32_t timeout = 1000);
-    
+    char * recvString(char * target1, char * target2, uint32_t timeout = 1000);
+
     /* 
      * Recvive data from uart. Return all received data if one of target1, target2 and target3 found or timeout. 
      */
     String recvString(String target1, String target2, String target3, uint32_t timeout = 1000);
-    
+    char * recvString(char * target1, char * target2, char * target3, uint32_t timeout = 1000);
+
     /* 
      * Recvive data from uart and search first target. Return true if target found, false for timeout.
      */
     bool recvFind(String target, uint32_t timeout = 1000);
+    bool recvFind(char * target, uint32_t timeout = 1000);
     
     /* 
      * Recvive data from uart and search first target and cut out the substring between begin and end(excluding begin and end self). 
      * Return true if target found, false for timeout.
      */
     bool recvFindAndFilter(String target, String begin, String end, String &data, uint32_t timeout = 1000);
+    bool recvFindAndFilter(char * target, char * begin, char * end, char * data, uint32_t timeout = 1000);
     
     /*
      * Receive a package from uart. 
@@ -441,11 +449,13 @@ class ESP8266 {
     
     bool eAT(void);
     bool eATRST(void);
-    bool eATGMR(String &version);
+    //bool eATGMR(String &version);
+    bool eATGMR(char * version);
     
     bool qATCWMODE(uint8_t *mode);
     bool sATCWMODE(uint8_t mode);
     bool sATCWJAP(String ssid, String pwd);
+    bool sATCWJAP(char * ssid, char * pwd);
     bool sATCWDHCP(uint8_t mode, boolean enabled);
     bool eATCWLAP(String &list);
     bool eATCWQAP(void);
@@ -453,13 +463,15 @@ class ESP8266 {
     bool eATCWLIF(String &list);
     
     bool eATCIPSTATUS(String &list);
+    bool sATCIPSTARTSingle(char * type, char * addr, uint32_t port);
     bool sATCIPSTARTSingle(String type, String addr, uint32_t port);
+    bool sATCIPSTARTMultiple(uint8_t mux_id, char * type, char * addr, uint32_t port);
     bool sATCIPSTARTMultiple(uint8_t mux_id, String type, String addr, uint32_t port);
     bool sATCIPSENDSingle(const uint8_t *buffer, uint32_t len);
     bool sATCIPSENDMultiple(uint8_t mux_id, const uint8_t *buffer, uint32_t len);
     bool sATCIPCLOSEMulitple(uint8_t mux_id);
     bool eATCIPCLOSESingle(void);
-    bool eATCIFSR(String &list);
+    bool eATCIFSR(char * list);
     bool sATCIPMUX(uint8_t mode);
     bool sATCIPSERVER(uint8_t mode, uint32_t port = 333);
     bool sATCIPSTO(uint32_t timeout);
