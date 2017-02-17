@@ -120,7 +120,7 @@ class ESP8266 {
      * @note This method will occupy a lot of memeory(hundreds of Bytes to a couple of KBytes). 
      *  Do not call this method unless you must and ensure that your board has enough memery left.
      */
-    String getAPList(void);
+    char * getAPList(void);
     
     /**
      * Join in AP. 
@@ -131,7 +131,7 @@ class ESP8266 {
      * @retval false - failure.
      * @note This method will take a couple of seconds. 
      */
-    bool joinAP(String ssid, String pwd);
+    //bool joinAP(String ssid, String pwd);
     bool joinAP(char * ssid, char * pwd);
     
     /**
@@ -162,7 +162,8 @@ class ESP8266 {
      *  2 - WPA_PSK, 3 - WPA2_PSK, 4 - WPA_WPA2_PSK, default: 4). 
      * @note This method should not be called when station mode. 
      */
-    bool setSoftAPParam(String ssid, String pwd, uint8_t chl = 7, uint8_t ecn = 4);
+    //bool setSoftAPParam(String ssid, String pwd, uint8_t chl = 7, uint8_t ecn = 4);
+    bool setSoftAPParam(char *ssid, char *pwd, uint8_t chl = 7, uint8_t ecn = 4);
     
     /**
      * Get the IP list of devices connected to SoftAP. 
@@ -170,14 +171,16 @@ class ESP8266 {
      * @return the list of IP.
      * @note This method should not be called when station mode. 
      */
-    String getJoinedDeviceIP(void);
+    //String getJoinedDeviceIP(void);
+    char * getJoinedDeviceIP(void);
     
     /**
      * Get the current status of connection(UDP and TCP). 
      * 
      * @return the status. 
      */
-    String getIPStatus(void);
+    //String getIPStatus(void);
+    char * getIPStatus(void);
     
     /**
      * Get the IP address of ESP8266. 
@@ -235,7 +238,7 @@ class ESP8266 {
      * @retval true - success.
      * @retval false - failure.
      */
-    bool registerUDP(String addr, uint32_t port);
+    bool registerUDP(char * addr, uint32_t port);
     
     /**
      * Unregister UDP port number in single mode. 
@@ -275,7 +278,7 @@ class ESP8266 {
      * @retval true - success.
      * @retval false - failure.
      */
-    bool registerUDP(uint8_t mux_id, String addr, uint32_t port);
+    bool registerUDP(uint8_t mux_id, char * addr, uint32_t port);
     
     /**
      * Unregister UDP port number in multiple mode. 
@@ -407,32 +410,32 @@ class ESP8266 {
     /* 
      * Recvive data from uart. Return all received data if target found or timeout. 
      */
-    String recvString(String target, uint32_t timeout = 1000);
+    //String recvString(String target, uint32_t timeout = 1000);
     char * recvString(char * target, uint32_t timeout = 1000);
     
     /* 
      * Recvive data from uart. Return all received data if one of target1 and target2 found or timeout. 
      */
-    String recvString(String target1, String target2, uint32_t timeout = 1000);
+    //String recvString(String target1, String target2, uint32_t timeout = 1000);
     char * recvString(char * target1, char * target2, uint32_t timeout = 1000);
 
     /* 
      * Recvive data from uart. Return all received data if one of target1, target2 and target3 found or timeout. 
      */
-    String recvString(String target1, String target2, String target3, uint32_t timeout = 1000);
+    //String recvString(String target1, String target2, String target3, uint32_t timeout = 1000);
     char * recvString(char * target1, char * target2, char * target3, uint32_t timeout = 1000);
 
     /* 
      * Recvive data from uart and search first target. Return true if target found, false for timeout.
      */
-    bool recvFind(String target, uint32_t timeout = 1000);
+    //bool recvFind(String target, uint32_t timeout = 1000);
     bool recvFind(char * target, uint32_t timeout = 1000);
     
     /* 
      * Recvive data from uart and search first target and cut out the substring between begin and end(excluding begin and end self). 
      * Return true if target found, false for timeout.
      */
-    bool recvFindAndFilter(String target, String begin, String end, String &data, uint32_t timeout = 1000);
+    //bool recvFindAndFilter(String target, String begin, String end, String &data, uint32_t timeout = 1000);
     bool recvFindAndFilter(char * target, char * begin, char * end, char * data, uint32_t timeout = 1000);
     
     /*
@@ -454,19 +457,16 @@ class ESP8266 {
     
     bool qATCWMODE(uint8_t *mode);
     bool sATCWMODE(uint8_t mode);
-    bool sATCWJAP(String ssid, String pwd);
     bool sATCWJAP(char * ssid, char * pwd);
     bool sATCWDHCP(uint8_t mode, boolean enabled);
-    bool eATCWLAP(String &list);
+    bool eATCWLAP(char *list);
     bool eATCWQAP(void);
-    bool sATCWSAP(String ssid, String pwd, uint8_t chl, uint8_t ecn);
-    bool eATCWLIF(String &list);
+    bool sATCWSAP(char * ssid, char * pwd, uint8_t chl, uint8_t ecn);
+    bool eATCWLIF(char * list);
     
-    bool eATCIPSTATUS(String &list);
-    bool sATCIPSTARTSingle(char * type, char * addr, uint32_t port);
-    bool sATCIPSTARTSingle(String type, String addr, uint32_t port);
-    bool sATCIPSTARTMultiple(uint8_t mux_id, char * type, char * addr, uint32_t port);
-    bool sATCIPSTARTMultiple(uint8_t mux_id, String type, String addr, uint32_t port);
+    bool eATCIPSTATUS(char *list);
+    bool sATCIPSTARTSingle(char * type, char * addr, uint32_t port); 
+    bool sATCIPSTARTMultiple(uint8_t mux_id, char * type, char * addr, uint32_t port); 
     bool sATCIPSENDSingle(const uint8_t *buffer, uint32_t len);
     bool sATCIPSENDMultiple(uint8_t mux_id, const uint8_t *buffer, uint32_t len);
     bool sATCIPCLOSEMulitple(uint8_t mux_id);
