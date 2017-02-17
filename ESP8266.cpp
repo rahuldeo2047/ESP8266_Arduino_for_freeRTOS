@@ -491,7 +491,33 @@ char * getSring(uint8_t *id, uint32_t *len, char * data, enum ipd_data_states st
 
 uint32_t ESP8266::recvPkg(uint8_t *buffer, uint32_t buffer_size, uint32_t *data_len, uint32_t timeout, uint8_t *coming_mux_id)
 {
-	return getSring(coming_mux_id, data_len, buffer, IDL);
+  static uint32_t _data_len = 0;
+   MatchState ms;
+  int indx = 0;
+  // buffer_size must be used
+  _data_len = 0;
+  buffer[0] = 0;
+  unsigned long start = millis();
+  while (millis() - start < timeout) {
+    while (m_puart->available() > 0) {
+      if ( buffer_size > indx )
+      {
+        buffer[indx++] = m_puart->read();
+      	buffer[indx] = 0;
+      }
+
+      ms.Target (buffer);
+
+      int result = ms.Match ("IPD%p*%d*%p%d+%p.+", 0);
+
+      if (REGEXP_MATCHED == result)
+      {
+        buffer = getSring(coming_mux_id, &_data_len, buffer, IDL);
+        break;
+      }
+    }
+    return _data_len;
+  }
 }
 
 void ESP8266::rx_empty(void) 
