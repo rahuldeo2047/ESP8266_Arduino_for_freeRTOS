@@ -476,9 +476,22 @@ class ESP8266 {
     bool sATCIPSERVER(uint8_t mode, uint32_t port = 333);
     bool sATCIPSTO(uint32_t timeout);
     
-
-
+    int isNumeric (const char * s);
+     enum ipd_data_states
+	{
+	  IDL,
+	  IPD,
+	  ID_OR_LEN,
+	  LEN,
+	  DATA,
+	  OVER
+	}ipd_data_states ;
+    char * getSring(uint8_t *id, uint32_t *len, char * data, enum ipd_data_states str_state = IDL);
     
+
+
+   
+
     /*
      * +IPD,len:data
      * +IPD,id,len:data

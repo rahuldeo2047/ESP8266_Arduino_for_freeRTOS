@@ -21,6 +21,14 @@
 #include "ESP8266.h"
 #include <Regexp.h>
 
+#include <Logging.h>
+
+#define STRINGIFY(x) #x
+#define TOSTRING(x) STRINGIFY(x)
+
+#define THIS "ESP8266: " TOSTRING(__LINE__) ": "
+
+
 #define RTOS_BASED_DELAY
 
 #if defined(RTOS_BASED_DELAY)
@@ -48,6 +56,11 @@
         }\
     } while(0)
 
+int freeRam () {
+  extern int __heap_start, *__brkval; 
+  int v; 
+  return (int) &v - (__brkval == 0 ? (int) &__heap_start : (int) __brkval); 
+}
 
 const char *ipd_data_states_str[] =
 {
@@ -59,18 +72,8 @@ const char *ipd_data_states_str[] =
   "_OVER_"
 };
 
-enum ipd_data_states
-{
-  IDL,
-  IPD,
-  ID_OR_LEN,
-  LEN,
-  DATA,
-  OVER
-}ipd_data_states ;
-
 #define DEBUG_PRINT Serial.print(" < "); Serial.print(__LINE__), Serial.print(" > ");
-#define TRACE_DATA(str_state, token, id, len, ipddata)  //Log.Info("[state (%d | %s) | tok:%s | id:%d | len:%d | ipddata:%s\t]"CR,str_state, ipd_data_states_str[str_state], token, *id, *len, ipddata );
+#define TRACE_DATA(str_state, token, id, len, ipddata)  Log.Info("%s[%d][state (%d | %s) | tok:%s | id:%d | len:%d | ipddata:%s\t]"CR,THIS, freeRam(), str_state, ipd_data_states_str[str_state], token, *id, *len, ipddata );
 
 
 #ifdef ESP8266_USE_SOFTWARE_SERIAL
@@ -369,7 +372,7 @@ uint32_t ESP8266::recv(uint8_t *coming_mux_id, uint8_t *buffer, uint32_t buffer_
 /* +IPD,<len>:<data> */
 
 
-int isNumeric (const char * s)
+int ESP8266::isNumeric (const char * s)
 {
   if (s == NULL || *s == '\0' || isspace(*s))
     return 0;
@@ -378,12 +381,13 @@ int isNumeric (const char * s)
   return *p == '\0';
 }
 
-char * getSring(uint8_t *id, uint32_t *len, char * data, enum ipd_data_states str_state = IDL)
+char * ESP8266::getSring(uint8_t *id, uint32_t *len, char * data, enum ipd_data_states str_state = IDL)
 {
   static const char s[4] = "+,,:";
   static char *token = NULL;
   static char ipddata[256] = {0};
-
+  char * ipdstart = NULL;
+  
   switch (str_state)
   {
     case IDL:
@@ -395,15 +399,36 @@ char * getSring(uint8_t *id, uint32_t *len, char * data, enum ipd_data_states st
 
         ms.Target (data);
 
-        int result = ms.Match ("IPD%p*%d*%p%d+%p.+", 0);
+        int result = ms.Match ("%pIPD%p*%d*%p+%d*%p.+", 0); //("%pIPD%p*%d*%p%d+%p.+", 0);
  
         if (REGEXP_MATCHED != result)
         { 
           return NULL;
         } 
-        TRACE_DATA(str_state, token, id, len, ipddata)
-        str_state = IPD;
-        return getSring(id, len, data, str_state);
+        
+        ipdstart = strstr(data, "+IPD"); 
+        
+        if( NULL != ipdstart)
+        {
+          int _indx = 0;
+	    int _len = strlen(ipdstart);
+	    for(_indx = 0 ; _indx<_len ; _indx++)
+	    {
+	      ipddata[_indx]=ipdstart[_indx];
+	      //Log.Debug(THIS"%c"CR, ipdstart[_indx]);
+	    }
+	    Log.Debug(THIS"%s"CR, ipdstart);
+		//strncpy(ipddata, (char*)(&data[ipdstart-data]), strlen(data)-(int)(ipdstart-data));
+		//strncpy(ipddata, ipdstart, strlen(data)-(int)(ipdstart-data));
+		//Log.Debug(THIS"ipdstart: %d (%s)| data: %d (%d) (%d) | %d | ipddata: %s"CR, ipdstart, ipddata, data, strlen(data)-(int)(ipdstart-data), data-ipdstart, ipddata);// indx, start, timeout, millis(), result, buffer );
+	 
+		//#warning issue is here
+		
+		TRACE_DATA(str_state, token, id, len, ipdstart)
+		str_state = IPD;
+		return getSring(id, len, ipddata, str_state);
+        }
+        return NULL;
       } break;
       
     case IPD:
@@ -420,8 +445,9 @@ char * getSring(uint8_t *id, uint32_t *len, char * data, enum ipd_data_states st
       
     case ID_OR_LEN:
       {
+        
         token = strtok(data, s);
-
+	
         if ( NULL != token)
         { 
           *id = atoi(token);
@@ -439,12 +465,15 @@ char * getSring(uint8_t *id, uint32_t *len, char * data, enum ipd_data_states st
 
         if ( NULL != token)
         {
-          if (0 == isNumeric(token))
+          if (0 == isNumeric(token)) // for +IPD,<len>:data
           {
             *len = *id;
             *id = 0;
 
-            memcpy(ipddata, token, *len);
+            //memcpy(ipddata, token, *len);
+            //if (m_puart->available() > 0)
+	    //        m_puart->readBytes(ipddata, *len);
+            //Log.Debug(THIS"%s"CR, ipddata);
             str_state = OVER;
             TRACE_DATA(str_state, token, id, len, ipddata)
 
@@ -457,6 +486,10 @@ char * getSring(uint8_t *id, uint32_t *len, char * data, enum ipd_data_states st
             *len = 255;
           }
           
+          //if (m_puart->available() > 0)
+	  //          m_puart->readBytes(ipddata, *len);
+          //Log.Debug(THIS"%s"CR, ipddata);
+          Log.Debug(THIS"?"CR);
           TRACE_DATA(str_state, token, id, len, ipddata)
           str_state = DATA; 
           return getSring(id, len, NULL, str_state);
@@ -465,10 +498,16 @@ char * getSring(uint8_t *id, uint32_t *len, char * data, enum ipd_data_states st
       
     case DATA:
       {
+      Log.Debug(THIS"?"CR);
         token = strtok(data, s);
+      Log.Debug(THIS"?"CR);
+
         if ( NULL != token)
         {
-          memcpy(ipddata, token, *len);
+          if (m_puart->available() > 0)
+               m_puart->readBytes(ipddata, *len);
+          Log.Debug(THIS"%s"CR, ipddata);
+          //memcpy(ipddata, token, *len);
           TRACE_DATA(str_state, token, id, len, ipddata)
           str_state = OVER;
           return getSring(id, len, NULL, str_state); // WHY another step
@@ -494,30 +533,50 @@ uint32_t ESP8266::recvPkg(uint8_t *buffer, uint32_t buffer_size, uint32_t *data_
   static uint32_t _data_len = 0;
    MatchState ms;
   int indx = 0;
+  char c = 0;
   // buffer_size must be used
   _data_len = 0;
   buffer[0] = 0;
   unsigned long start = millis();
+  Log.Debug(THIS"RAM[%d]"CR, freeRam());
+  
   while (millis() - start < timeout) {
-    while (m_puart->available() > 0) {
+    while (m_puart->available() > 0) 
+    {
       if ( buffer_size > indx )
       {
-        buffer[indx++] = m_puart->read();
-      	buffer[indx] = 0;
+                c = m_puart->read();
+                Log.Debug(THIS"[%d] %c"CR, indx, c);
+		buffer[indx++] = c;
+		
+		buffer[indx] = 0;
+		
+		if(':' == c )
+                {		
+		
+			ms.Target (buffer);
+
+			int result = ms.Match ("%pIPD%p*%d*%p+%d*%p.+", 0);
+
+			Log.Debug(THIS"%d %l %l %l: %d :%s"CR, indx, start, timeout, millis(), result, buffer );
+
+			if (REGEXP_MATCHED == result)
+			{
+				buffer = getSring(coming_mux_id, &_data_len, buffer, IDL);
+				break;
+			}
+		}
       }
-
-      ms.Target (buffer);
-
-      int result = ms.Match ("IPD%p*%d*%p%d+%p.+", 0);
-
-      if (REGEXP_MATCHED == result)
-      {
-        buffer = getSring(coming_mux_id, &_data_len, buffer, IDL);
-        break;
-      }
+      else
+     	 break;
     }
-    return _data_len;
+    
+      if ( buffer_size > indx )
+      {
+	      indx = 0;
+      }
   }
+  return _data_len;
 }
 
 void ESP8266::rx_empty(void) 
